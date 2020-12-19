@@ -7155,6 +7155,9 @@ function MainInit() {
 	// 背景スプライトを作成
 	createMultipleSprite(`backSprite`, g_scoreObj.backMaxDepth);
 
+	// 結果画面用スプライト
+	createSprite(`divRoot`, `resultRoot`, 0, 0, g_sWidth, g_sHeight);
+
 	// ステップゾーン、矢印のメインスプライトを作成
 	const mainSprite = createSprite(`divRoot`, `mainSprite`, g_headerObj.playingX, g_posObj.stepY - C_STEP_Y, g_headerObj.playingWidth, g_sHeight);
 	mainSprite.style.transform = `scale(${g_keyObj.scale})`;
@@ -8390,6 +8393,50 @@ function MainInit() {
 		}
 	}
 	g_timeoutEvtId = setTimeout(_ => flowTimeline(), 1000 / g_fps);
+}
+
+function flowTimelineAfterMain() {
+
+	const currentFrame = g_scoreObj.frameNum;
+	lblframe.textContent = currentFrame;
+
+	// 背景・マスクモーション
+	g_animationData.forEach(sprite => {
+		if (g_scoreObj[`${sprite}Data`][currentFrame] !== undefined) {
+			drawMainSpriteData(currentFrame, sprite);
+		}
+	});
+
+	// ユーザカスタムイベント(フレーム毎)
+	if (typeof customMainEnterFrame === C_TYP_FUNCTION) {
+		customMainEnterFrame();
+		if (typeof customMainEnterFrame2 === C_TYP_FUNCTION) {
+			customMainEnterFrame2();
+		}
+		g_scoreObj.baseFrame++;
+	}
+
+	// リザルト画面移行後のフェードアウト処理
+	if (g_scoreObj.fadeOutFrame >= g_scoreObj.frameNum) {
+		if (g_scoreObj.frameNum >= g_scoreObj.fullFrame) {
+			clearTimeout(g_timeoutEvtId);
+		}
+		g_scoreObj.frameNum++;
+	} else {
+		const tmpVolume = (g_audio.volume - (3 * g_stateObj.volume / 100 * C_FRM_AFTERFADE / g_scoreObj.fadeOutTerm) / 1000);
+		if (tmpVolume < 0) {
+			g_audio.volume = 0;
+			clearTimeout(g_timeoutEvtId);
+		} else {
+			g_audio.volume = tmpVolume;
+		}
+	}
+
+	const thisTime = performance.now();
+	const buffTime = (thisTime - musicStartTime - (currentFrame - musicStartFrame) * 1000 / g_fps);
+	g_scoreObj.frameNum++;
+	g_scoreObj.nominalFrameNum++;
+	g_timeoutEvtId = setTimeout(_ => flowTimeline(), 1000 / g_fps - buffTime);
 }
 
 /**

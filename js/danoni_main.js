@@ -3167,6 +3167,19 @@ function headerConvert(_dosObj) {
 				setVal(g_presetSettingUse[option], true, C_TYP_BOOLEAN) : true), C_TYP_BOOLEAN);
 	});
 
+	// 段位認定ゲージの場合はshuffle, gauge, autoPlayを強制変更
+	if (getQueryParamVal(`gradeup`) !== null) {
+		obj.shuffleUse = false;
+		obj.gaugeUse = false;
+		obj.autoPlayUse = false;
+		g_gaugeOptionObj.gaugeGradeUps = {
+			lifeBorders: [0],
+			lifeRecoverys: [0.22],
+			lifeDamages: [10],
+			lifeInits: [setVal(getQueryParamVal(`gradeup`), 100, C_TYP_NUMBER)],
+		};
+	}
+
 	let interlockingErrorFlg = false;
 	g_displays.forEach((option, j) => {
 
@@ -4361,6 +4374,11 @@ function createOptionWindow(_sprite) {
 		// ゲージ設定(Light, Easy)の初期化
 		if (g_stateObj.gauge === `Light` || g_stateObj.gauge === `Easy`) {
 			setLifeCategory(g_headerObj, { _magRcv: 2 });
+		}
+
+		if (getQueryParamVal(`gradeup`) !== null) {
+			g_stateObj.gauge = `GradeUp`;
+			g_gauges = [g_stateObj.gauge];
 		}
 
 		// ゲージ設定別に個別設定した場合はここで設定を上書き
